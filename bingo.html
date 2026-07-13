@@ -1,555 +1,520 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>¿Cuántos cartones juego? — Calculadora de bingo</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#0d1a12">
+<title>Bingo · Estratega de Cartones</title>
 <style>
-  :root {
-    --surface-1: #fcfcfb;
-    --page: #f9f9f7;
-    --text-primary: #0b0b0b;
-    --text-secondary: #52514e;
-    --text-muted: #898781;
-    --grid: #e1e0d9;
-    --baseline: #c3c2b7;
-    --border: rgba(11,11,11,0.10);
-    --series-1: #2a78d6;
-    --good: #006300;
-    --bad: #d03b3b;
-    --tile: #ffffff;
+  :root{
+    --bg:#0d1a12; --card:#132419; --card2:#0f1f15; --line:#22402e;
+    --gold:#d4af37; --txt:#e8e6da; --dim:#8fa896;
+    --red:#c0392b; --green:#1e8449;
+    --good:#7ddc9a; --bad:#e07b6d; --warn:#e8c46d;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --surface-1: #1a1a19;
-      --page: #0d0d0d;
-      --text-primary: #ffffff;
-      --text-secondary: #c3c2b7;
-      --text-muted: #898781;
-      --grid: #2c2c2a;
-      --baseline: #383835;
-      --border: rgba(255,255,255,0.10);
-      --series-1: #3987e5;
-      --good: #0ca30c;
-      --bad: #e66767;
-      --tile: #222221;
-    }
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    background: var(--page);
-    color: var(--text-primary);
-    line-height: 1.5;
-    padding: 1rem;
-  }
-  .wrap { max-width: 980px; margin: 0 auto; }
-  header { margin: 1rem 0 1.5rem; }
-  h1 { font-size: 1.5rem; font-weight: 700; }
-  header p { color: var(--text-secondary); max-width: 60ch; margin-top: .25rem; }
-  h2 { font-size: 1.05rem; font-weight: 600; margin-bottom: .75rem; }
-  section {
-    background: var(--surface-1);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.1rem 1.2rem;
-    margin-bottom: 1rem;
-  }
-  .presets { display: flex; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
-  .presets button {
-    font: inherit; font-size: .85rem;
-    padding: .35rem .8rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--tile);
-    color: var(--text-secondary);
-    cursor: pointer;
-  }
-  .presets button.active { border-color: var(--series-1); color: var(--text-primary); font-weight: 600; }
-  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: .8rem 1rem; }
-  .field label { display: block; font-size: .78rem; color: var(--text-secondary); margin-bottom: .2rem; }
-  .field input {
-    width: 100%; font: inherit;
-    font-variant-numeric: tabular-nums;
-    padding: .4rem .55rem;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--tile);
-    color: var(--text-primary);
-  }
-  .field input:focus { outline: 2px solid var(--series-1); outline-offset: 1px; border-color: transparent; }
-  .field .hint { font-size: .7rem; color: var(--text-muted); margin-top: .15rem; }
-  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: .8rem; }
-  .tile {
-    background: var(--tile);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: .8rem .9rem;
-  }
-  .tile .k { font-size: .75rem; color: var(--text-secondary); }
-  .tile .v { font-size: 1.45rem; font-weight: 700; margin-top: .1rem; }
-  .tile .s { font-size: .72rem; color: var(--text-muted); margin-top: .15rem; }
-  .v.pos { color: var(--good); }
-  .v.neg { color: var(--bad); }
-  .verdict {
-    margin-top: .9rem;
-    padding: .7rem .9rem;
-    border-radius: 10px;
-    border: 1px solid var(--border);
-    background: var(--tile);
-    font-size: .9rem;
-    color: var(--text-secondary);
-  }
-  .verdict strong { color: var(--text-primary); }
-  .chart-box { position: relative; }
-  .chart-title { font-size: .85rem; color: var(--text-secondary); margin-bottom: .4rem; }
-  svg { display: block; width: 100%; height: auto; }
-  .tooltip {
-    position: absolute;
-    pointer-events: none;
-    background: var(--tile);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: .4rem .6rem;
-    font-size: .75rem;
-    color: var(--text-secondary);
-    box-shadow: 0 2px 8px rgba(0,0,0,.12);
-    white-space: nowrap;
-    display: none;
-    z-index: 5;
-  }
-  .tooltip b { color: var(--text-primary); font-variant-numeric: tabular-nums; }
-  .table-box { overflow-x: auto; max-height: 320px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; }
-  table { border-collapse: collapse; width: 100%; font-size: .82rem; }
-  th, td { padding: .35rem .7rem; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-  th { position: sticky; top: 0; background: var(--surface-1); color: var(--text-secondary); font-weight: 600; font-size: .75rem; border-bottom: 1px solid var(--baseline); }
-  td { border-bottom: 1px solid var(--grid); color: var(--text-secondary); }
-  td:first-child, th:first-child { text-align: left; }
-  tr.best td { font-weight: 700; color: var(--text-primary); }
-  td.pos { color: var(--good); } td.neg { color: var(--bad); }
-  .rules { color: var(--text-secondary); font-size: .9rem; }
-  .rules li { margin: .55rem 0 .55rem 1.2rem; }
-  .rules strong { color: var(--text-primary); }
-  .rules code { font-family: ui-monospace, monospace; font-size: .82em; background: var(--tile); border: 1px solid var(--border); border-radius: 4px; padding: 0 .3em; }
-  footer { color: var(--text-muted); font-size: .75rem; margin: 1.5rem 0; max-width: 75ch; }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  body{margin:0; background:var(--bg); color:var(--txt);
+    font-family:-apple-system,'Segoe UI',Roboto,sans-serif; padding:10px 10px 40px; max-width:520px; margin-inline:auto;}
+  h1{font-size:19px; margin:4px 0 2px; color:var(--gold); letter-spacing:1px; text-align:center;}
+  .sub{text-align:center; color:var(--dim); font-size:11px; margin-bottom:10px;}
+  .card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px; margin-bottom:12px;}
+  .card h2{font-size:12px; margin:0 0 8px; color:var(--gold); text-transform:uppercase; letter-spacing:1.5px;}
+
+  /* Modo de premio */
+  .modes{display:flex; gap:6px;}
+  .modes button{flex:1; height:34px; border-radius:8px; border:1px solid var(--line); background:var(--card2);
+    color:var(--dim); font-size:11px; cursor:pointer;}
+  .modes button.active{border-color:var(--gold); color:var(--gold); font-weight:700; background:#1a2f20;}
+
+  /* Formulario */
+  .fgrid{display:grid; grid-template-columns:1fr 1fr; gap:8px;}
+  .field label{display:block; font-size:10px; color:var(--dim); margin-bottom:3px; letter-spacing:.3px;}
+  .field input{width:100%; background:var(--card2); color:var(--txt); border:1px solid var(--line);
+    border-radius:8px; padding:8px 10px; font-size:14px; font-variant-numeric:tabular-nums;}
+  .field input:focus{outline:1px solid var(--gold); border-color:var(--gold);}
+  .field .note{margin-top:2px;}
+  .wide{grid-column:1 / -1;}
+  input[type=range]{width:100%; accent-color:var(--gold); margin-top:6px; padding:0; border:none; background:transparent;}
+
+  /* Recomendación */
+  .predwrap{display:flex; align-items:center; justify-content:center; gap:18px; margin:6px 0 10px;}
+  .pnum{width:84px; height:84px; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:34px; font-weight:700; border:2px solid var(--gold); box-shadow:0 2px 12px rgba(0,0,0,.5);
+    background:radial-gradient(circle at 32% 26%, #1e3a28, var(--card2) 70%); line-height:1;}
+  .pnum small{font-size:9px; font-weight:600; color:var(--dim); letter-spacing:1px; margin-top:3px; text-transform:uppercase;}
+  .pnum.off{border-color:var(--line); color:var(--dim); box-shadow:none;}
+  .pulse{animation:pop .4s ease;}
+  @keyframes pop{0%{transform:scale(.9);}55%{transform:scale(1.06);}100%{transform:scale(1);}}
+  .predside{max-width:200px;}
+  .verdict{display:inline-block; padding:2px 10px; border-radius:10px; font-size:11px; font-weight:600;}
+  .v-yes{background:#1b3a28; color:var(--good); border:1px solid var(--gold);}
+  .v-no{background:#3a1f1b; color:var(--bad);}
+  .predside .why{font-size:11px; color:var(--dim); margin-top:6px; line-height:1.5;}
+
+  .bstats{display:flex; justify-content:space-around; font-size:11px; color:var(--dim); text-align:center; margin-bottom:4px;}
+  .bstats b{display:block; font-size:15px; color:var(--txt); font-variant-numeric:tabular-nums;}
+  .bstats b.good{color:var(--good);} .bstats b.bad{color:var(--bad);} .bstats b.gold{color:var(--gold);}
+  .bstats span{max-width:110px;}
+  #verdictNote{font-size:11px; color:var(--dim); line-height:1.55; margin-top:8px; border-top:1px solid var(--line); padding-top:8px;}
+  #verdictNote b{color:var(--txt);}
+
+  /* Gráfica */
+  .chartwrap{position:relative;}
+  #chart{width:100%; height:auto; display:block;}
+  .whint{text-align:center; font-size:10px; color:var(--dim); margin-top:6px;}
+  .tooltip{position:absolute; pointer-events:none; display:none; z-index:5; background:var(--card2);
+    border:1px solid var(--line); border-radius:8px; padding:5px 9px; font-size:10px; color:var(--dim);
+    box-shadow:0 4px 14px rgba(0,0,0,.6); white-space:nowrap;}
+  .tooltip b{color:var(--gold); font-variant-numeric:tabular-nums;}
+
+  /* Tabla */
+  .tscroll{max-height:300px; overflow-y:auto;}
+  table{width:100%; border-collapse:collapse; font-size:11px;}
+  th{color:var(--dim); text-align:right; font-weight:400; padding:3px 4px; border-bottom:1px solid var(--line);
+    position:sticky; top:0; background:var(--card);}
+  td{padding:5px 4px; border-bottom:1px solid rgba(34,64,46,.4); text-align:right; font-variant-numeric:tabular-nums;}
+  th:first-child, td:first-child{text-align:left;}
+  tr.best td{color:var(--gold); font-weight:700; background:rgba(212,175,55,.07);}
+  .good{color:var(--good);} .bad{color:var(--bad);} .warn{color:var(--warn);}
+
+  /* Reglas */
+  details summary{cursor:pointer; font-size:12px; color:var(--gold); text-transform:uppercase; letter-spacing:1.5px; list-style:none;}
+  details summary::before{content:'▸ ';} details[open] summary::before{content:'▾ ';}
+  details > div{margin-top:10px;}
+  .rule{display:flex; gap:10px; margin-bottom:12px; font-size:12px; line-height:1.6; color:var(--dim);}
+  .rule b{color:var(--txt);}
+  .rnum{flex-shrink:0; width:26px; height:26px; border-radius:50%; border:2px solid var(--gold); color:var(--gold);
+    display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; margin-top:2px;}
+  .rule code{font-family:ui-monospace,Consolas,monospace; font-size:11px; background:var(--card2);
+    border:1px solid var(--line); border-radius:4px; padding:0 4px; color:var(--gold);}
+
+  .note{font-size:10px; color:var(--dim); line-height:1.5;}
+  footer{font-size:10px; color:var(--dim); text-align:center; line-height:1.6; margin-top:16px; padding:0 6px;}
 </style>
 </head>
 <body>
-<div class="wrap">
 
-<header>
-  <h1>🎱 ¿Cuántos cartones juego?</h1>
-  <p>Calculadora de valor esperado para bingo electrónico interconectado. Ajusta los datos a lo que veas en pantalla en tu sala y te dirá cuántos cartones conviene comprar — y cuándo no conviene comprar ninguno.</p>
-</header>
+<h1>🎱 ESTRATEGA DE BINGO</h1>
+<div class="sub">Bingo electrónico interconectado · cuántos cartones jugar según sala, premios y bote</div>
 
-<section>
-  <h2>1 · Datos de la partida</h2>
-  <div class="presets" id="presets">
-    <button data-p="mixto" class="active">Mixto (garantizado + %)</button>
+<div class="card">
+  <h2>Tipo de premio</h2>
+  <div class="modes" id="modes">
+    <button data-p="mixto" class="active">Mixto (mín. + %)</button>
     <button data-p="fijo">Premios fijos</button>
-    <button data-p="prop">Proporcional puro</button>
+    <button data-p="prop">Proporcional</button>
   </div>
-  <div class="grid">
+</div>
+
+<div class="card">
+  <h2>Datos de la partida</h2>
+  <div class="fgrid">
     <div class="field">
       <label for="precio">Precio del cartón (€)</label>
-      <input id="precio" type="number" min="0.1" step="0.1" value="1">
+      <input id="precio" type="number" inputmode="decimal" min="0.1" step="0.1" value="1">
     </div>
     <div class="field">
-      <label for="ajenos">Cartones de los demás (todas las salas)</label>
-      <input id="ajenos" type="number" min="1" step="1" value="100">
-      <div class="hint">Lo que marca el contador ahora, sin contar los tuyos.</div>
+      <label for="maxCartones">Máx. cartones/partida</label>
+      <input id="maxCartones" type="number" inputmode="numeric" min="1" step="1" value="24">
     </div>
     <div class="field">
-      <label for="subida">Cartones que entran en los últimos segundos</label>
-      <input id="subida" type="number" min="0" step="5" value="40">
-      <div class="hint">La subida típica del contador justo antes de cerrar. Se suma a los ajenos.</div>
+      <label for="ajenos">Cartones de los demás (contador)</label>
+      <input id="ajenos" type="number" inputmode="numeric" min="1" step="1" value="100">
+    </div>
+    <div class="field">
+      <label for="subida">Entran en los últimos segundos</label>
+      <input id="subida" type="number" inputmode="numeric" min="0" step="5" value="40">
+    </div>
+    <div class="field wide">
+      <input type="range" id="ajenosRange" min="1" max="600" step="1" value="100" aria-label="Cartones de los demás (deslizador)">
+      <div class="note">Desliza para simular cómo cambia todo según se llena o vacía la sala. La subida final se suma al contador en todos los cálculos.</div>
     </div>
     <div class="field">
       <label for="pctLinea">% recaudación a línea</label>
-      <input id="pctLinea" type="number" min="0" max="100" step="1" value="10">
+      <input id="pctLinea" type="number" inputmode="decimal" min="0" max="100" step="1" value="10">
     </div>
     <div class="field">
       <label for="pctBingo">% recaudación a bingo</label>
-      <input id="pctBingo" type="number" min="0" max="100" step="1" value="55">
+      <input id="pctBingo" type="number" inputmode="decimal" min="0" max="100" step="1" value="55">
     </div>
     <div class="field">
-      <label for="minLinea">Mínimo garantizado línea (€)</label>
-      <input id="minLinea" type="number" min="0" step="1" value="20">
+      <label for="minLinea">Mín. garantizado línea (€)</label>
+      <input id="minLinea" type="number" inputmode="decimal" min="0" step="1" value="20">
     </div>
     <div class="field">
-      <label for="minBingo">Mínimo garantizado bingo (€)</label>
-      <input id="minBingo" type="number" min="0" step="1" value="150">
+      <label for="minBingo">Mín. garantizado bingo (€)</label>
+      <input id="minBingo" type="number" inputmode="decimal" min="0" step="1" value="150">
     </div>
     <div class="field">
       <label for="bote">Bote / jackpot (€)</label>
-      <input id="bote" type="number" min="0" step="10" value="500">
+      <input id="bote" type="number" inputmode="decimal" min="0" step="10" value="500">
     </div>
     <div class="field">
-      <label for="probBote">Prob. de que el bingo lleve bote (%)</label>
-      <input id="probBote" type="number" min="0" max="100" step="0.1" value="1">
-      <div class="hint">P. ej. bingo en ≤ N bolas: suele ser 0,5–2 %.</div>
-    </div>
-    <div class="field">
-      <label for="maxCartones">Máx. cartones por partida</label>
-      <input id="maxCartones" type="number" min="1" step="1" value="24">
-      <div class="hint">Límite del terminal o el tuyo propio.</div>
+      <label for="probBote">Prob. de llevarse el bote (%)</label>
+      <input id="probBote" type="number" inputmode="decimal" min="0" max="100" step="0.1" value="1">
+      <div class="note">Bingo en ≤ N bolas: suele ser 0,5–2 %.</div>
     </div>
     <div class="field">
       <label for="banca">Presupuesto de la sesión (€)</label>
-      <input id="banca" type="number" min="1" step="5" value="800">
+      <input id="banca" type="number" inputmode="decimal" min="1" step="5" value="800">
     </div>
     <div class="field">
-      <label for="partidas">Partidas que piensas jugar</label>
-      <input id="partidas" type="number" min="1" step="1" value="40">
+      <label for="partidas">Partidas previstas</label>
+      <input id="partidas" type="number" inputmode="numeric" min="1" step="1" value="40">
     </div>
   </div>
-</section>
-
-<section>
-  <h2>2 · Recomendación</h2>
-  <div class="tiles">
-    <div class="tile">
-      <div class="k">Cartones a jugar</div>
-      <div class="v" id="tCartones">—</div>
-      <div class="s" id="tCartonesSub"></div>
-    </div>
-    <div class="tile">
-      <div class="k">Resultado esperado por partida</div>
-      <div class="v" id="tEV">—</div>
-      <div class="s" id="tEVSub"></div>
-    </div>
-    <div class="tile">
-      <div class="k">Prob. de cantar bingo</div>
-      <div class="v" id="tProb">—</div>
-      <div class="s" id="tProbSub"></div>
-    </div>
-    <div class="tile">
-      <div class="k">Umbral de rentabilidad</div>
-      <div class="v" id="tUmbral">—</div>
-      <div class="s">cartones ajenos máx. para que la partida pueda ser favorable</div>
-    </div>
-  </div>
-  <div class="verdict" id="verdict"></div>
-</section>
-
-<section>
-  <h2>3 · Curva de valor esperado</h2>
-  <div class="chart-title">Resultado esperado (€) según los cartones que compres — pasa el dedo o el ratón por la curva</div>
-  <div class="chart-box" id="chartBox">
-    <svg id="chart" viewBox="0 0 900 380" role="img" aria-label="Curva de valor esperado por número de cartones"></svg>
-    <div class="tooltip" id="tooltip"></div>
-  </div>
-</section>
-
-<section>
-  <h2>4 · Tabla detallada</h2>
-  <div class="table-box">
-    <table>
-      <thead>
-        <tr><th>Cartones</th><th>Coste</th><th>Prob. bingo</th><th>Valor esperado</th><th>Rentabilidad</th></tr>
-      </thead>
-      <tbody id="tbody"></tbody>
-    </table>
-  </div>
-</section>
-
-<section>
-  <h2>5 · Las reglas de oro (léelas una vez)</h2>
-  <ul class="rules">
-    <li><strong>Si el premio es solo un % de la recaudación, no existe cantidad óptima: pierdes lo mismo por cada euro jugado.</strong> Con un reparto del 65 %, cada euro en cartones te devuelve 0,65 € de media, compres 1 o compres 50. Más cartones = más probabilidad de ganar, pero también más pérdida media. Ahí se juega por ocio: fija un presupuesto y punto.</li>
-    <li><strong>La ventaja real está en los mínimos garantizados y los botes.</strong> Si la sala garantiza (por ejemplo) 170 € en premios y en todas las salas juntas hay pocos cartones, el premio repartido supera lo recaudado: la partida es matemáticamente favorable. Por eso tu instinto de ir a horas de poca gente es correcto — pero solo si hay garantizados o bote.</li>
-    <li><strong>Regla rápida del umbral:</strong> divide el premio garantizado total entre el precio del cartón. Si los cartones ajenos en juego están <em>por debajo</em> de ese número, la partida puede ser favorable; por encima, no lo es nunca. Ejemplo: 170 € garantizados con cartón a 1 € → umbral 170 cartones.</li>
-    <li><strong>Cuando la partida es favorable, el óptimo NO es «cuantos más mejor».</strong> Tus propios cartones diluyen tu ventaja (compiten entre sí y, en modo mixto, engordan una recaudación que quizá anule el garantizado). Con premio fijo <code>P</code>, cartón a <code>c</code> € y <code>N</code> cartones ajenos, el óptimo teórico es <code>√(P·N/c) − N</code>: cuanta más gente hay, MENOS cartones debes jugar, hasta llegar a cero en el umbral.</li>
-    <li><strong>El contador engaña: decide con la subida final ya descontada.</strong> Si en los últimos 3–4 segundos suelen entrar 30–50 cartones más, la competencia real no es la que marca el contador cuando tú decides. Apunta durante unas sesiones cuánto sube de media en tu bingo y pon ese número en la casilla «cartones que entran en los últimos segundos». Y compra tarde tú también: cuanto más cerca del cierre confirmes, con mejor información juegas — quienes entran al final probablemente están haciendo exactamente tu misma estrategia.</li>
-    <li><strong>Gestión del presupuesto:</strong> nunca gastes en una partida más que presupuesto ÷ partidas previstas. Aunque juegues con ventaja, la varianza del bingo es enorme: lo normal es encadenar muchas partidas sin premio. La ventaja solo aflora a largo plazo y solo si el presupuesto sobrevive.</li>
-    <li><strong>Empates:</strong> si dos cartones cantan a la vez, el premio se reparte. Con pocas bolas cantadas y muchos cartones es más frecuente de lo que parece; es otro motivo para preferir partidas con poca gente.</li>
-    <li><strong>Y la de verdad importante:</strong> incluso eligiendo bien horas y cantidades, el bingo con reparto &lt; 100 % es un juego de esperanza negativa en cuanto la sala se llena. Trátalo como ocio con método, no como ingreso.</li>
-  </ul>
-</section>
-
-<footer>
-  Supuestos del modelo: todos los cartones (tuyos y ajenos) tienen la misma probabilidad de ganar; el premio de línea y el de bingo se calculan como el máximo entre el mínimo garantizado y el % sobre la recaudación total (tus cartones incluidos); el bote se cobra solo si además cantas el bingo. No se modelan premios repartidos por empate. Esta herramienta orienta, no garantiza nada: juega con moderación.
-</footer>
-
 </div>
 
+<div class="card">
+  <h2>Cartones a jugar</h2>
+  <div class="predwrap">
+    <div class="pnum" id="bigBall"><span id="tCartones">—</span><small>cartones</small></div>
+    <div class="predside">
+      <span class="verdict v-yes" id="pill">Favorable</span>
+      <div class="why" id="tCartonesSub"></div>
+    </div>
+  </div>
+  <div class="bstats">
+    <span>Esperado / partida<b id="tEV">—</b><span class="note" id="tEVSub"></span></span>
+    <span>Prob. de bingo<b class="gold" id="tProb">—</b><span class="note" id="tProbSub"></span></span>
+    <span>Umbral rentable<b class="gold" id="tUmbral">—</b><span class="note">ajenos máx. al cierre para que haya ventaja</span></span>
+  </div>
+  <div id="verdictNote"></div>
+</div>
+
+<div class="card">
+  <h2>Curva de valor esperado</h2>
+  <div class="chartwrap" id="chartBox">
+    <svg id="chart" viewBox="0 0 480 260" role="img" aria-label="Valor esperado según número de cartones"></svg>
+    <div class="tooltip" id="tooltip"></div>
+  </div>
+  <div class="whint">€ esperados por partida según los cartones que compres · toca la curva para ver cada punto · ● dorado = óptimo</div>
+</div>
+
+<div class="card">
+  <details>
+    <summary>Tabla detallada</summary>
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Cart.</th><th>Coste</th><th>Prob.</th><th>Esperado</th><th>Rent.</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </details>
+</div>
+
+<div class="card">
+  <details>
+    <summary>📜 Las reglas de oro</summary>
+    <div>
+      <div class="rule"><span class="rnum">1</span><span><b>Si el premio es solo un % de la recaudación, no existe cantidad óptima:</b> pierdes lo mismo por cada euro jugado. Con reparto del 65 %, cada euro devuelve 0,65 € de media, compres 1 cartón o 50. Ahí se juega por ocio: presupuesto fijo y punto.</span></div>
+      <div class="rule"><span class="rnum">2</span><span><b>La ventaja real está en los mínimos garantizados y los botes.</b> Si la sala garantiza 170 € y entre todas las salas hay pocos cartones, se reparte más de lo que se recauda: partida matemáticamente favorable. Tu instinto de ir a horas de poca gente es correcto — pero solo si hay garantizados o bote.</span></div>
+      <div class="rule"><span class="rnum">3</span><span><b>Regla rápida del umbral:</b> premio garantizado total ÷ precio del cartón. Si los cartones ajenos están <i>por debajo</i> de ese número, puede haber ventaja; por encima, jamás. Ej.: 170 € garantizados, cartón a 1 € → umbral 170.</span></div>
+      <div class="rule"><span class="rnum">4</span><span><b>Cuando hay ventaja, el óptimo NO es «cuantos más mejor».</b> Tus cartones compiten entre sí y diluyen la ventaja. Con premio fijo <code>P</code>, cartón a <code>c</code> € y <code>N</code> ajenos, el óptimo es <code>√(P·N/c) − N</code>: cuanta más gente, MENOS cartones, hasta cero en el umbral.</span></div>
+      <div class="rule"><span class="rnum">5</span><span><b>El contador engaña: decide con la subida final descontada.</b> Si en los últimos 3–4 segundos entran 30–50 cartones, la competencia real no es la que ves al decidir. Apunta la subida típica de tu bingo y ponla en su casilla. Y compra tarde tú también: los que entran al final están haciendo tu misma estrategia.</span></div>
+      <div class="rule"><span class="rnum">6</span><span><b>Gestión del presupuesto:</b> nunca gastes por partida más que presupuesto ÷ partidas previstas. Aun con ventaja, la varianza es enorme: lo normal es encadenar partidas sin premio. La ventaja solo aflora si el presupuesto sobrevive.</span></div>
+      <div class="rule"><span class="rnum">7</span><span><b>Empates:</b> si dos cartones cantan a la vez, el premio se reparte — más frecuente con la sala llena. Otro motivo para preferir partidas vacías.</span></div>
+      <div class="rule"><span class="rnum">8</span><span><b>La de verdad importante:</b> con reparto &lt; 100 %, en cuanto la sala se llena el bingo es esperanza negativa se mire como se mire. Trátalo como ocio con método, no como ingreso.</span></div>
+    </div>
+  </details>
+</div>
+
+<footer>
+  ⚠️ Supuestos: todos los cartones tienen la misma probabilidad; ajenos = contador + subida final;
+  premio = máx(garantizado, % de la recaudación con tus cartones incluidos); el bote solo si además
+  cantas bingo; no se modelan empates. Esta app orienta con matemáticas, no garantiza nada.
+  Juega con moderación.
+</footer>
+
 <script>
-(function () {
-  "use strict";
+'use strict';
 
-  var $ = function (id) { return document.getElementById(id); };
-  var eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
-  var pct = function (x, d) { return (x * 100).toFixed(d === undefined ? 1 : d).replace(".", ",") + " %"; };
+var $ = function (id) { return document.getElementById(id); };
+var eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
+var pct = function (x, d) { return (x * 100).toFixed(d === undefined ? 1 : d).replace(".", ",") + " %"; };
 
-  var inputs = ["precio", "ajenos", "subida", "pctLinea", "pctBingo", "minLinea", "minBingo",
-                "bote", "probBote", "maxCartones", "banca", "partidas"];
+var inputs = ["precio", "ajenos", "subida", "pctLinea", "pctBingo", "minLinea", "minBingo",
+              "bote", "probBote", "maxCartones", "banca", "partidas"];
 
-  var PRESETS = {
-    mixto: { pctLinea: 10, pctBingo: 55, minLinea: 20, minBingo: 150 },
-    fijo:  { pctLinea: 0,  pctBingo: 0,  minLinea: 20, minBingo: 150 },
-    prop:  { pctLinea: 10, pctBingo: 55, minLinea: 0,  minBingo: 0 }
-  };
+var PRESETS = {
+  mixto: { pctLinea: 10, pctBingo: 55, minLinea: 20, minBingo: 150 },
+  fijo:  { pctLinea: 0,  pctBingo: 0,  minLinea: 20, minBingo: 150 },
+  prop:  { pctLinea: 10, pctBingo: 55, minLinea: 0,  minBingo: 0 }
+};
 
-  document.querySelectorAll("#presets button").forEach(function (btn) {
-    btn.addEventListener("click", function () {
-      document.querySelectorAll("#presets button").forEach(function (b) { b.classList.remove("active"); });
-      btn.classList.add("active");
-      var p = PRESETS[btn.dataset.p];
-      Object.keys(p).forEach(function (k) { $(k).value = p[k]; });
-      update();
-    });
+document.querySelectorAll("#modes button").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    document.querySelectorAll("#modes button").forEach(function (b) { b.classList.remove("active"); });
+    btn.classList.add("active");
+    var p = PRESETS[btn.dataset.p];
+    Object.keys(p).forEach(function (k) { $(k).value = p[k]; });
+    update();
   });
+});
 
-  function readParams() {
-    var v = {};
-    inputs.forEach(function (k) { v[k] = parseFloat($(k).value); });
-    v.precio = Math.max(0.01, v.precio || 1);
-    v.ajenos = Math.max(1, Math.round(v.ajenos || 1));
-    v.subida = Math.max(0, Math.round(v.subida || 0));
-    v.N = v.ajenos + v.subida; // competencia real al cierre de la venta
-    v.maxCartones = Math.max(1, Math.round(v.maxCartones || 1));
-    v.partidas = Math.max(1, Math.round(v.partidas || 1));
-    v.banca = Math.max(v.precio, v.banca || v.precio);
-    ["pctLinea", "pctBingo", "minLinea", "minBingo", "bote", "probBote"].forEach(function (k) {
-      if (!isFinite(v[k]) || v[k] < 0) v[k] = 0;
-    });
-    return v;
-  }
-
-  // Valor esperado si compro n cartones habiendo N ajenos.
-  function evFor(n, N, p) {
-    if (n <= 0) return 0;
-    var venta = p.precio * (n + N);
-    var premioLinea = Math.max(p.minLinea, venta * p.pctLinea / 100);
-    var premioBingo = Math.max(p.minBingo, venta * p.pctBingo / 100);
-    var premioBote = (p.probBote / 100) * p.bote;
-    var probGano = n / (n + N);
-    return probGano * (premioLinea + premioBingo + premioBote) - n * p.precio;
-  }
-
-  // Mayor N para el que aún existe algún n con EV > 0 (la ventaja aparece con n→0,
-  // así que basta mirar la derivada en el origen: (P(N)+bote)/N > precio).
-  function umbralAjenos(p) {
-    var lo = 1, hi = 2, cap = 5e6;
-    function favorable(N) {
-      var venta = p.precio * N;
-      var premios = Math.max(p.minLinea, venta * p.pctLinea / 100) +
-                    Math.max(p.minBingo, venta * p.pctBingo / 100) +
-                    (p.probBote / 100) * p.bote;
-      return premios / N > p.precio;
-    }
-    if (!favorable(1)) return 0;
-    while (hi < cap && favorable(hi)) { lo = hi; hi *= 2; }
-    if (hi >= cap) return Infinity; // proporcional con reparto >100% (caso teórico)
-    while (hi - lo > 1) {
-      var mid = Math.floor((lo + hi) / 2);
-      if (favorable(mid)) lo = mid; else hi = mid;
-    }
-    return lo;
-  }
-
-  function compute(p) {
-    var rows = [], best = { n: 0, ev: 0 };
-    for (var n = 1; n <= p.maxCartones; n++) {
-      var ev = evFor(n, p.N, p);
-      rows.push({ n: n, coste: n * p.precio, prob: n / (n + p.N), ev: ev, roi: ev / (n * p.precio) });
-      if (ev > best.ev) best = { n: n, ev: ev };
-    }
-    // Tope por presupuesto: gasto por partida <= banca / partidas (mínimo 1 cartón).
-    var topePresu = Math.max(1, Math.floor((p.banca / p.partidas) / p.precio));
-    var favorable = best.n > 0;
-    var rec = favorable ? Math.min(best.n, topePresu) : 1;
-    var limite = favorable && best.n > topePresu ? "presupuesto" : (favorable && best.n === p.maxCartones ? "maximo" : null);
-    return { rows: rows, best: best, favorable: favorable, rec: rec, topePresu: topePresu,
-             limite: limite, umbral: umbralAjenos(p) };
-  }
-
-  function update() {
-    var p = readParams();
-    var r = compute(p);
-    renderTiles(p, r);
-    renderChart(p, r);
-    renderTable(p, r);
-  }
-
-  function renderTiles(p, r) {
-    var evRec = evFor(r.rec, p.N, p);
-    var probRec = r.rec / (r.rec + p.N);
-    var tC = $("tCartones"), tE = $("tEV"), tP = $("tProb"), tU = $("tUmbral");
-
-    if (r.favorable) {
-      tC.textContent = r.rec;
-      $("tCartonesSub").textContent =
-        r.limite === "presupuesto" ? "óptimo matemático: " + r.best.n + " — recortado por tu presupuesto (" + eur.format(r.topePresu * p.precio) + "/partida)" :
-        r.limite === "maximo" ? "tope del terminal alcanzado; el óptimo podría ser mayor" :
-        "óptimo matemático con " + p.N.toLocaleString("es-ES") + " ajenos (contador + subida final)";
-    } else {
-      tC.textContent = "0–1";
-      $("tCartonesSub").textContent = "sin ventaja: si juegas, hazlo por ocio y con lo mínimo";
-    }
-
-    tE.textContent = (evRec >= 0 ? "+" : "") + eur.format(evRec);
-    tE.className = "v " + (evRec >= 0.005 ? "pos" : evRec <= -0.005 ? "neg" : "");
-    $("tEVSub").textContent = "jugando " + r.rec + " cartón(es) de " + eur.format(p.precio) +
-      " · sesión de " + p.partidas + " partidas: " + (evRec * p.partidas >= 0 ? "+" : "") + eur.format(evRec * p.partidas);
-
-    tP.textContent = pct(probRec);
-    $("tProbSub").textContent = "al menos un bingo en " + p.partidas + " partidas: " +
-      pct(1 - Math.pow(1 - probRec, p.partidas));
-
-    tU.textContent = r.umbral === Infinity ? "∞" : r.umbral === 0 ? "0" : "≈ " + r.umbral.toLocaleString("es-ES");
-
-    var v = $("verdict");
-    if (!r.favorable) {
-      v.innerHTML = "<strong>Ahora mismo la partida no es favorable con ninguna cantidad de cartones.</strong> " +
-        (r.umbral > 0 && r.umbral !== Infinity
-          ? "Con estos premios, solo interesa cuando los cartones ajenos al cierre bajan de <strong>" + r.umbral.toLocaleString("es-ES") + "</strong> (ahora: " + p.N.toLocaleString("es-ES") + " = " + p.ajenos.toLocaleString("es-ES") + " del contador + " + p.subida.toLocaleString("es-ES") + " de subida final). Vuelve en una franja con menos gente o busca partidas con más garantizado."
-          : "Con premio puramente proporcional nunca hay ventaja: decide cuánto ocio quieres pagar y no lo superes.");
-    } else {
-      var margen = r.umbral === Infinity ? "" :
-        " Incluso contando la subida de última hora (" + p.N.toLocaleString("es-ES") + " ajenos al cierre) estás por debajo del umbral de " + r.umbral.toLocaleString("es-ES") + ": es justo el escenario de «ir cuando hay poca gente» que buscabas.";
-      v.innerHTML = "<strong>Partida favorable.</strong> Jugando " + r.rec +
-        " cartón(es) tu resultado esperado es " + eur.format(evRec) + " por partida." + margen +
-        " Recuerda: es una media a largo plazo; la mayoría de partidas no cobrarás nada.";
-    }
-  }
-
-  /* ---------- gráfica ---------- */
-  var NS = "http://www.w3.org/2000/svg";
-  var chartData = null;
-
-  function el(name, attrs, parent) {
-    var e = document.createElementNS(NS, name);
-    for (var k in attrs) e.setAttribute(k, attrs[k]);
-    if (parent) parent.appendChild(e);
-    return e;
-  }
-
-  function niceTicks(min, max, count) {
-    var span = max - min || 1;
-    var step = Math.pow(10, Math.floor(Math.log10(span / count)));
-    var err = span / count / step;
-    if (err >= 7.5) step *= 10; else if (err >= 3.5) step *= 5; else if (err >= 1.5) step *= 2;
-    var ticks = [];
-    for (var t = Math.ceil(min / step) * step; t <= max + 1e-9; t += step) ticks.push(Math.abs(t) < step / 1e6 ? 0 : t);
-    return ticks;
-  }
-
-  function renderChart(p, r) {
-    var svg = $("chart");
-    svg.innerHTML = "";
-    var W = 900, H = 380, m = { t: 24, r: 20, b: 42, l: 64 };
-    var iw = W - m.l - m.r, ih = H - m.t - m.b;
-
-    var evs = r.rows.map(function (d) { return d.ev; });
-    var yMin = Math.min(0, Math.min.apply(null, evs));
-    var yMax = Math.max(0, Math.max.apply(null, evs));
-    var pad = (yMax - yMin) * 0.08 || 1;
-    yMin -= pad; yMax += pad;
-
-    var x = function (n) { return m.l + (n - 1) / Math.max(1, p.maxCartones - 1) * iw; };
-    var y = function (v) { return m.t + (yMax - v) / (yMax - yMin) * ih; };
-
-    var css = getComputedStyle(document.documentElement);
-    var cGrid = css.getPropertyValue("--grid").trim();
-    var cBase = css.getPropertyValue("--baseline").trim();
-    var cMuted = css.getPropertyValue("--text-muted").trim();
-    var cSeries = css.getPropertyValue("--series-1").trim();
-    var cSurface = css.getPropertyValue("--surface-1").trim();
-    var cText = css.getPropertyValue("--text-primary").trim();
-
-    niceTicks(yMin, yMax, 5).forEach(function (t) {
-      el("line", { x1: m.l, x2: m.l + iw, y1: y(t), y2: y(t), stroke: cGrid, "stroke-width": 1 }, svg);
-      el("text", { x: m.l - 8, y: y(t) + 4, "text-anchor": "end", fill: cMuted,
-                   "font-size": 12, style: "font-variant-numeric:tabular-nums" }, svg)
-        .textContent = eur.format(t);
-    });
-    // línea de cero destacada
-    if (yMin < 0 && yMax > 0)
-      el("line", { x1: m.l, x2: m.l + iw, y1: y(0), y2: y(0), stroke: cBase, "stroke-width": 1.5, "stroke-dasharray": "5 4" }, svg);
-
-    var xStep = Math.max(1, Math.ceil(p.maxCartones / 12));
-    for (var n = 1; n <= p.maxCartones; n += xStep) {
-      el("text", { x: x(n), y: H - m.b + 20, "text-anchor": "middle", fill: cMuted,
-                   "font-size": 12, style: "font-variant-numeric:tabular-nums" }, svg).textContent = n;
-    }
-    el("text", { x: m.l + iw / 2, y: H - 6, "text-anchor": "middle", fill: cMuted, "font-size": 12 }, svg)
-      .textContent = "cartones comprados";
-    el("line", { x1: m.l, x2: m.l + iw, y1: m.t + ih, y2: m.t + ih, stroke: cBase, "stroke-width": 1 }, svg);
-
-    var d = r.rows.map(function (pt, i) { return (i ? "L" : "M") + x(pt.n).toFixed(1) + " " + y(pt.ev).toFixed(1); }).join(" ");
-    el("path", { d: d, fill: "none", stroke: cSeries, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
-
-    if (r.favorable) {
-      var bx = x(r.best.n), by = y(r.best.ev);
-      el("circle", { cx: bx, cy: by, r: 5, fill: cSeries, stroke: cSurface, "stroke-width": 2 }, svg);
-      var anchor = r.best.n > p.maxCartones * 0.75 ? "end" : "start";
-      el("text", { x: bx + (anchor === "end" ? -9 : 9), y: by - 10, "text-anchor": anchor,
-                   fill: cText, "font-size": 12, "font-weight": 600 }, svg)
-        .textContent = "óptimo: " + r.best.n + " (" + eur.format(r.best.ev) + ")";
-    }
-
-    // capa de hover
-    var hoverLine = el("line", { y1: m.t, y2: m.t + ih, stroke: cBase, "stroke-width": 1, opacity: 0 }, svg);
-    var hoverDot = el("circle", { r: 4.5, fill: cSeries, stroke: cSurface, "stroke-width": 2, opacity: 0 }, svg);
-    el("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" }, svg);
-
-    chartData = { p: p, r: r, x: x, y: y, m: m, iw: iw, hoverLine: hoverLine, hoverDot: hoverDot, W: W };
-  }
-
-  var box = $("chartBox"), tip = $("tooltip"), svgEl = $("chart");
-
-  function onMove(evt) {
-    if (!chartData) return;
-    var c = chartData, rect = svgEl.getBoundingClientRect();
-    var px = (evt.clientX - rect.left) * (c.W / rect.width);
-    var frac = (px - c.m.l) / c.iw;
-    if (frac < -0.05 || frac > 1.05) { onLeave(); return; }
-    var n = Math.round(1 + Math.min(1, Math.max(0, frac)) * (c.p.maxCartones - 1));
-    var row = c.r.rows[n - 1];
-    if (!row) return;
-    var cx = c.x(n), cy = c.y(row.ev);
-    c.hoverLine.setAttribute("x1", cx); c.hoverLine.setAttribute("x2", cx);
-    c.hoverLine.setAttribute("opacity", 1);
-    c.hoverDot.setAttribute("cx", cx); c.hoverDot.setAttribute("cy", cy);
-    c.hoverDot.setAttribute("opacity", 1);
-    tip.innerHTML = "<b>" + n + "</b> cartón(es) · coste <b>" + eur.format(row.coste) + "</b><br>" +
-      "prob. bingo <b>" + pct(row.prob) + "</b> · esperado <b>" + eur.format(row.ev) + "</b>";
-    tip.style.display = "block";
-    var bxRect = box.getBoundingClientRect();
-    var left = (cx / c.W) * bxRect.width + 12;
-    if (left + tip.offsetWidth > bxRect.width - 4) left -= tip.offsetWidth + 24;
-    tip.style.left = left + "px";
-    tip.style.top = Math.max(0, (cy / 380) * (bxRect.width * 380 / c.W) - tip.offsetHeight - 10) + "px";
-  }
-  function onLeave() {
-    tip.style.display = "none";
-    if (chartData) { chartData.hoverLine.setAttribute("opacity", 0); chartData.hoverDot.setAttribute("opacity", 0); }
-  }
-  svgEl.addEventListener("pointermove", onMove);
-  svgEl.addEventListener("pointerleave", onLeave);
-
-  function renderTable(p, r) {
-    var tb = $("tbody");
-    tb.innerHTML = "";
-    r.rows.forEach(function (row) {
-      var tr = document.createElement("tr");
-      if (r.favorable && row.n === r.rec) tr.className = "best";
-      var evCls = row.ev >= 0.005 ? "pos" : row.ev <= -0.005 ? "neg" : "";
-      tr.innerHTML =
-        "<td>" + row.n + (r.favorable && row.n === r.rec ? " ◂ recomendado" : "") + "</td>" +
-        "<td>" + eur.format(row.coste) + "</td>" +
-        "<td>" + pct(row.prob) + "</td>" +
-        "<td class='" + evCls + "'>" + (row.ev >= 0 ? "+" : "") + eur.format(row.ev) + "</td>" +
-        "<td class='" + evCls + "'>" + (row.roi >= 0 ? "+" : "") + pct(row.roi) + "</td>";
-      tb.appendChild(tr);
-    });
-  }
-
-  inputs.forEach(function (k) { $(k).addEventListener("input", update); });
-  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", update);
+$("ajenosRange").addEventListener("input", function () {
+  $("ajenos").value = this.value;
   update();
-})();
+});
+
+function readParams() {
+  var v = {};
+  inputs.forEach(function (k) { v[k] = parseFloat($(k).value); });
+  v.precio = Math.max(0.01, v.precio || 1);
+  v.ajenos = Math.max(1, Math.round(v.ajenos || 1));
+  v.subida = Math.max(0, Math.round(v.subida || 0));
+  v.N = v.ajenos + v.subida; // competencia real al cierre de la venta
+  v.maxCartones = Math.max(1, Math.round(v.maxCartones || 1));
+  v.partidas = Math.max(1, Math.round(v.partidas || 1));
+  v.banca = Math.max(v.precio, v.banca || v.precio);
+  ["pctLinea", "pctBingo", "minLinea", "minBingo", "bote", "probBote"].forEach(function (k) {
+    if (!isFinite(v[k]) || v[k] < 0) v[k] = 0;
+  });
+  return v;
+}
+
+// Valor esperado si compro n cartones habiendo N ajenos.
+function evFor(n, N, p) {
+  if (n <= 0) return 0;
+  var venta = p.precio * (n + N);
+  var premioLinea = Math.max(p.minLinea, venta * p.pctLinea / 100);
+  var premioBingo = Math.max(p.minBingo, venta * p.pctBingo / 100);
+  var premioBote = (p.probBote / 100) * p.bote;
+  var probGano = n / (n + N);
+  return probGano * (premioLinea + premioBingo + premioBote) - n * p.precio;
+}
+
+// Mayor N para el que aún existe algún n con EV > 0 (la ventaja aparece con n→0,
+// así que basta mirar la derivada en el origen: (P(N)+bote)/N > precio).
+function umbralAjenos(p) {
+  var lo = 1, hi = 2, cap = 5e6;
+  function favorable(N) {
+    var venta = p.precio * N;
+    var premios = Math.max(p.minLinea, venta * p.pctLinea / 100) +
+                  Math.max(p.minBingo, venta * p.pctBingo / 100) +
+                  (p.probBote / 100) * p.bote;
+    return premios / N > p.precio;
+  }
+  if (!favorable(1)) return 0;
+  while (hi < cap && favorable(hi)) { lo = hi; hi *= 2; }
+  if (hi >= cap) return Infinity; // reparto >100%: siempre favorable (caso teórico)
+  while (hi - lo > 1) {
+    var mid = Math.floor((lo + hi) / 2);
+    if (favorable(mid)) lo = mid; else hi = mid;
+  }
+  return lo;
+}
+
+function compute(p) {
+  var rows = [], best = { n: 0, ev: 0 };
+  for (var n = 1; n <= p.maxCartones; n++) {
+    var ev = evFor(n, p.N, p);
+    rows.push({ n: n, coste: n * p.precio, prob: n / (n + p.N), ev: ev, roi: ev / (n * p.precio) });
+    if (ev > best.ev) best = { n: n, ev: ev };
+  }
+  // Tope por presupuesto: gasto por partida <= banca / partidas (mínimo 1 cartón).
+  var topePresu = Math.max(1, Math.floor((p.banca / p.partidas) / p.precio));
+  var favorable = best.n > 0;
+  var rec = favorable ? Math.min(best.n, topePresu) : 1;
+  var limite = favorable && best.n > topePresu ? "presupuesto" : (favorable && best.n === p.maxCartones ? "maximo" : null);
+  return { rows: rows, best: best, favorable: favorable, rec: rec, topePresu: topePresu,
+           limite: limite, umbral: umbralAjenos(p) };
+}
+
+var lastBall = null;
+function update() {
+  var p = readParams();
+  if (parseInt($("ajenosRange").value, 10) !== p.ajenos)
+    $("ajenosRange").value = Math.min(600, p.ajenos);
+  var r = compute(p);
+  renderReco(p, r);
+  renderChart(p, r);
+  renderTable(p, r);
+}
+
+function renderReco(p, r) {
+  var evRec = evFor(r.rec, p.N, p);
+  var probRec = r.rec / (r.rec + p.N);
+  var ball = $("bigBall"), pill = $("pill");
+
+  var ballText = r.favorable ? String(r.rec) : "0–1";
+  if (ballText !== lastBall) {
+    lastBall = ballText;
+    ball.classList.remove("pulse");
+    void ball.offsetWidth;
+    ball.classList.add("pulse");
+  }
+  $("tCartones").textContent = ballText;
+  ball.classList.toggle("off", !r.favorable);
+  pill.className = "verdict " + (r.favorable ? "v-yes" : "v-no");
+  pill.textContent = r.favorable ? "✔ Partida favorable" : "✘ Sin ventaja";
+
+  $("tCartonesSub").textContent = r.favorable
+    ? (r.limite === "presupuesto" ? "Óptimo matemático: " + r.best.n + " — recortado por tu presupuesto (" + eur.format(r.topePresu * p.precio) + "/partida)." :
+       r.limite === "maximo" ? "Tope del terminal alcanzado; el óptimo podría ser mayor." :
+       "Óptimo con " + p.N.toLocaleString("es-ES") + " ajenos al cierre (contador + subida final).")
+    : "Si juegas, hazlo por ocio y con lo mínimo.";
+
+  var tE = $("tEV");
+  tE.textContent = (evRec >= 0 ? "+" : "") + eur.format(evRec);
+  tE.className = evRec >= 0.005 ? "good" : evRec <= -0.005 ? "bad" : "";
+  $("tEVSub").textContent = "sesión (" + p.partidas + " part.): " +
+    (evRec * p.partidas >= 0 ? "+" : "") + eur.format(evRec * p.partidas);
+
+  $("tProb").textContent = pct(probRec);
+  $("tProbSub").textContent = "≥1 bingo en " + p.partidas + " part.: " +
+    pct(1 - Math.pow(1 - probRec, p.partidas));
+
+  $("tUmbral").textContent = r.umbral === Infinity ? "∞" : r.umbral === 0 ? "0" : "≈" + r.umbral.toLocaleString("es-ES");
+
+  var v = $("verdictNote");
+  if (!r.favorable) {
+    v.innerHTML = "<b>Ahora mismo no hay cantidad de cartones que sea favorable.</b> " +
+      (r.umbral > 0 && r.umbral !== Infinity
+        ? "Con estos premios solo interesa cuando los ajenos al cierre bajan de <b>" + r.umbral.toLocaleString("es-ES") + "</b> (ahora: " + p.N.toLocaleString("es-ES") + " = " + p.ajenos.toLocaleString("es-ES") + " del contador + " + p.subida.toLocaleString("es-ES") + " de subida final). Vuelve en una franja con menos gente o busca partidas con más garantizado."
+        : "Con premio puramente proporcional nunca hay ventaja: decide cuánto ocio quieres pagar y no lo superes.");
+  } else {
+    var margen = r.umbral === Infinity ? "" :
+      " Incluso con la subida de última hora (" + p.N.toLocaleString("es-ES") + " ajenos al cierre) estás bajo el umbral de " + r.umbral.toLocaleString("es-ES") + ": el escenario de «ir cuando hay poca gente» que buscabas.";
+    v.innerHTML = "<b>Partida favorable.</b> Con " + r.rec + " cartón(es) el resultado esperado es " +
+      eur.format(evRec) + " por partida." + margen +
+      " Es una media a largo plazo: la mayoría de partidas no cobrarás nada.";
+  }
+}
+
+/* ================= GRÁFICA ================= */
+var NS = "http://www.w3.org/2000/svg";
+var chartData = null;
+
+function el(name, attrs, parent) {
+  var e = document.createElementNS(NS, name);
+  for (var k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+
+function niceTicks(min, max, count) {
+  var span = max - min || 1;
+  var step = Math.pow(10, Math.floor(Math.log10(span / count)));
+  var err = span / count / step;
+  if (err >= 7.5) step *= 10; else if (err >= 3.5) step *= 5; else if (err >= 1.5) step *= 2;
+  var ticks = [];
+  for (var t = Math.ceil(min / step) * step; t <= max + 1e-9; t += step) ticks.push(Math.abs(t) < step / 1e6 ? 0 : t);
+  return ticks;
+}
+
+function renderChart(p, r) {
+  var svg = $("chart");
+  svg.innerHTML = "";
+  var W = 480, H = 260, m = { t: 16, r: 10, b: 32, l: 48 };
+  var iw = W - m.l - m.r, ih = H - m.t - m.b;
+
+  var evs = r.rows.map(function (d) { return d.ev; });
+  var yMin = Math.min(0, Math.min.apply(null, evs));
+  var yMax = Math.max(0, Math.max.apply(null, evs));
+  var pad = (yMax - yMin) * 0.1 || 1;
+  yMin -= pad; yMax += pad;
+
+  var x = function (n) { return m.l + (n - 1) / Math.max(1, p.maxCartones - 1) * iw; };
+  var y = function (v) { return m.t + (yMax - v) / (yMax - yMin) * ih; };
+
+  var GOLD = "#d4af37", GRID = "#22402e", BASE = "#3a5c44", DIM = "#8fa896", CARD = "#132419", TXT = "#e8e6da";
+
+  niceTicks(yMin, yMax, 5).forEach(function (t) {
+    el("line", { x1: m.l, x2: m.l + iw, y1: y(t), y2: y(t), stroke: GRID, "stroke-width": 1 }, svg);
+    el("text", { x: m.l - 6, y: y(t) + 3, "text-anchor": "end", fill: DIM, "font-size": 9,
+                 style: "font-variant-numeric:tabular-nums" }, svg).textContent = eur.format(t);
+  });
+  var y0 = Math.max(m.t, Math.min(m.t + ih, y(0)));
+  if (yMin < 0 && yMax > 0)
+    el("line", { x1: m.l, x2: m.l + iw, y1: y0, y2: y0, stroke: BASE, "stroke-width": 1.2, "stroke-dasharray": "4 3" }, svg);
+
+  var xStep = Math.max(1, Math.ceil(p.maxCartones / 10));
+  for (var n = 1; n <= p.maxCartones; n += xStep) {
+    el("text", { x: x(n), y: H - m.b + 14, "text-anchor": "middle", fill: DIM, "font-size": 9,
+                 style: "font-variant-numeric:tabular-nums" }, svg).textContent = n;
+  }
+  el("text", { x: m.l + iw / 2, y: H - 4, "text-anchor": "middle", fill: DIM, "font-size": 9 }, svg)
+    .textContent = "cartones comprados";
+  el("line", { x1: m.l, x2: m.l + iw, y1: m.t + ih, y2: m.t + ih, stroke: BASE, "stroke-width": 1 }, svg);
+
+  // relleno entre la curva y el cero (ganancia arriba / pérdida abajo)
+  var lineD = r.rows.map(function (pt, i) { return (i ? "L" : "M") + x(pt.n).toFixed(1) + " " + y(pt.ev).toFixed(1); }).join(" ");
+  var areaD = lineD + " L" + x(r.rows[r.rows.length - 1].n).toFixed(1) + " " + y0.toFixed(1) +
+              " L" + x(1).toFixed(1) + " " + y0.toFixed(1) + " Z";
+  el("path", { d: areaD, fill: GOLD, opacity: 0.10 }, svg);
+  el("path", { d: lineD, fill: "none", stroke: GOLD, "stroke-width": 2,
+               "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+
+  if (r.favorable) {
+    var bx = x(r.best.n), by = y(r.best.ev);
+    el("circle", { cx: bx, cy: by, r: 8, fill: GOLD, opacity: 0.25 }, svg);
+    el("circle", { cx: bx, cy: by, r: 4.5, fill: GOLD, stroke: CARD, "stroke-width": 2 }, svg);
+    var anchor = r.best.n > p.maxCartones * 0.7 ? "end" : "start";
+    el("text", { x: bx + (anchor === "end" ? -9 : 9), y: by - 9, "text-anchor": anchor,
+                 fill: TXT, "font-size": 10, "font-weight": 700 }, svg)
+      .textContent = "óptimo: " + r.best.n + " (" + eur.format(r.best.ev) + ")";
+  }
+
+  var hoverLine = el("line", { y1: m.t, y2: m.t + ih, stroke: BASE, "stroke-width": 1, opacity: 0 }, svg);
+  var hoverDot = el("circle", { r: 4, fill: GOLD, stroke: CARD, "stroke-width": 2, opacity: 0 }, svg);
+  el("rect", { x: m.l, y: m.t, width: iw, height: ih, fill: "transparent" }, svg);
+
+  chartData = { p: p, r: r, x: x, y: y, m: m, iw: iw, hoverLine: hoverLine, hoverDot: hoverDot, W: W, H: H };
+}
+
+var box = $("chartBox"), tip = $("tooltip"), svgEl = $("chart");
+
+function onMove(evt) {
+  if (!chartData) return;
+  var c = chartData, rect = svgEl.getBoundingClientRect();
+  var px = (evt.clientX - rect.left) * (c.W / rect.width);
+  var frac = (px - c.m.l) / c.iw;
+  if (frac < -0.05 || frac > 1.05) { onLeave(); return; }
+  var n = Math.round(1 + Math.min(1, Math.max(0, frac)) * (c.p.maxCartones - 1));
+  var row = c.r.rows[n - 1];
+  if (!row) return;
+  var cx = c.x(n), cy = c.y(row.ev);
+  c.hoverLine.setAttribute("x1", cx); c.hoverLine.setAttribute("x2", cx);
+  c.hoverLine.setAttribute("opacity", 1);
+  c.hoverDot.setAttribute("cx", cx); c.hoverDot.setAttribute("cy", cy);
+  c.hoverDot.setAttribute("opacity", 1);
+  tip.innerHTML = "<b>" + n + "</b> cartón(es) · coste <b>" + eur.format(row.coste) + "</b><br>" +
+    "prob. <b>" + pct(row.prob) + "</b> · esperado <b>" + eur.format(row.ev) + "</b>";
+  tip.style.display = "block";
+  var bxRect = box.getBoundingClientRect();
+  var scale = bxRect.width / c.W;
+  var left = cx * scale + 10;
+  if (left + tip.offsetWidth > bxRect.width - 4) left -= tip.offsetWidth + 20;
+  tip.style.left = left + "px";
+  tip.style.top = Math.max(0, cy * scale - tip.offsetHeight - 8) + "px";
+}
+function onLeave() {
+  tip.style.display = "none";
+  if (chartData) { chartData.hoverLine.setAttribute("opacity", 0); chartData.hoverDot.setAttribute("opacity", 0); }
+}
+svgEl.addEventListener("pointermove", onMove);
+svgEl.addEventListener("pointerleave", onLeave);
+
+function renderTable(p, r) {
+  var tb = $("tbody");
+  tb.innerHTML = "";
+  r.rows.forEach(function (row) {
+    var tr = document.createElement("tr");
+    if (r.favorable && row.n === r.rec) tr.className = "best";
+    var evCls = row.ev >= 0.005 ? "good" : row.ev <= -0.005 ? "bad" : "";
+    tr.innerHTML =
+      "<td>" + row.n + (r.favorable && row.n === r.rec ? " ◂" : "") + "</td>" +
+      "<td>" + eur.format(row.coste) + "</td>" +
+      "<td>" + pct(row.prob) + "</td>" +
+      "<td class='" + evCls + "'>" + (row.ev >= 0 ? "+" : "") + eur.format(row.ev) + "</td>" +
+      "<td class='" + evCls + "'>" + (row.roi >= 0 ? "+" : "") + pct(row.roi, 0) + "</td>";
+    tb.appendChild(tr);
+  });
+}
+
+inputs.forEach(function (k) { $(k).addEventListener("input", update); });
+update();
 </script>
 </body>
 </html>
