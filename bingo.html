@@ -156,8 +156,13 @@
     </div>
     <div class="field">
       <label for="ajenos">Cartones de los demás (todas las salas)</label>
-      <input id="ajenos" type="number" min="1" step="1" value="150">
-      <div class="hint">Los que NO son tuyos. Si no lo ves, estímalo.</div>
+      <input id="ajenos" type="number" min="1" step="1" value="100">
+      <div class="hint">Lo que marca el contador ahora, sin contar los tuyos.</div>
+    </div>
+    <div class="field">
+      <label for="subida">Cartones que entran en los últimos segundos</label>
+      <input id="subida" type="number" min="0" step="5" value="40">
+      <div class="hint">La subida típica del contador justo antes de cerrar. Se suma a los ajenos.</div>
     </div>
     <div class="field">
       <label for="pctLinea">% recaudación a línea</label>
@@ -177,7 +182,7 @@
     </div>
     <div class="field">
       <label for="bote">Bote / jackpot (€)</label>
-      <input id="bote" type="number" min="0" step="10" value="0">
+      <input id="bote" type="number" min="0" step="10" value="500">
     </div>
     <div class="field">
       <label for="probBote">Prob. de que el bingo lleve bote (%)</label>
@@ -191,11 +196,11 @@
     </div>
     <div class="field">
       <label for="banca">Presupuesto de la sesión (€)</label>
-      <input id="banca" type="number" min="1" step="5" value="60">
+      <input id="banca" type="number" min="1" step="5" value="800">
     </div>
     <div class="field">
       <label for="partidas">Partidas que piensas jugar</label>
-      <input id="partidas" type="number" min="1" step="1" value="20">
+      <input id="partidas" type="number" min="1" step="1" value="40">
     </div>
   </div>
 </section>
@@ -255,6 +260,7 @@
     <li><strong>La ventaja real está en los mínimos garantizados y los botes.</strong> Si la sala garantiza (por ejemplo) 170 € en premios y en todas las salas juntas hay pocos cartones, el premio repartido supera lo recaudado: la partida es matemáticamente favorable. Por eso tu instinto de ir a horas de poca gente es correcto — pero solo si hay garantizados o bote.</li>
     <li><strong>Regla rápida del umbral:</strong> divide el premio garantizado total entre el precio del cartón. Si los cartones ajenos en juego están <em>por debajo</em> de ese número, la partida puede ser favorable; por encima, no lo es nunca. Ejemplo: 170 € garantizados con cartón a 1 € → umbral 170 cartones.</li>
     <li><strong>Cuando la partida es favorable, el óptimo NO es «cuantos más mejor».</strong> Tus propios cartones diluyen tu ventaja (compiten entre sí y, en modo mixto, engordan una recaudación que quizá anule el garantizado). Con premio fijo <code>P</code>, cartón a <code>c</code> € y <code>N</code> cartones ajenos, el óptimo teórico es <code>√(P·N/c) − N</code>: cuanta más gente hay, MENOS cartones debes jugar, hasta llegar a cero en el umbral.</li>
+    <li><strong>El contador engaña: decide con la subida final ya descontada.</strong> Si en los últimos 3–4 segundos suelen entrar 30–50 cartones más, la competencia real no es la que marca el contador cuando tú decides. Apunta durante unas sesiones cuánto sube de media en tu bingo y pon ese número en la casilla «cartones que entran en los últimos segundos». Y compra tarde tú también: cuanto más cerca del cierre confirmes, con mejor información juegas — quienes entran al final probablemente están haciendo exactamente tu misma estrategia.</li>
     <li><strong>Gestión del presupuesto:</strong> nunca gastes en una partida más que presupuesto ÷ partidas previstas. Aunque juegues con ventaja, la varianza del bingo es enorme: lo normal es encadenar muchas partidas sin premio. La ventaja solo aflora a largo plazo y solo si el presupuesto sobrevive.</li>
     <li><strong>Empates:</strong> si dos cartones cantan a la vez, el premio se reparte. Con pocas bolas cantadas y muchos cartones es más frecuente de lo que parece; es otro motivo para preferir partidas con poca gente.</li>
     <li><strong>Y la de verdad importante:</strong> incluso eligiendo bien horas y cantidades, el bingo con reparto &lt; 100 % es un juego de esperanza negativa en cuanto la sala se llena. Trátalo como ocio con método, no como ingreso.</li>
@@ -275,7 +281,7 @@
   var eur = new Intl.NumberFormat("es-ES", { style: "currency", currency: "EUR" });
   var pct = function (x, d) { return (x * 100).toFixed(d === undefined ? 1 : d).replace(".", ",") + " %"; };
 
-  var inputs = ["precio", "ajenos", "pctLinea", "pctBingo", "minLinea", "minBingo",
+  var inputs = ["precio", "ajenos", "subida", "pctLinea", "pctBingo", "minLinea", "minBingo",
                 "bote", "probBote", "maxCartones", "banca", "partidas"];
 
   var PRESETS = {
@@ -299,6 +305,8 @@
     inputs.forEach(function (k) { v[k] = parseFloat($(k).value); });
     v.precio = Math.max(0.01, v.precio || 1);
     v.ajenos = Math.max(1, Math.round(v.ajenos || 1));
+    v.subida = Math.max(0, Math.round(v.subida || 0));
+    v.N = v.ajenos + v.subida; // competencia real al cierre de la venta
     v.maxCartones = Math.max(1, Math.round(v.maxCartones || 1));
     v.partidas = Math.max(1, Math.round(v.partidas || 1));
     v.banca = Math.max(v.precio, v.banca || v.precio);
@@ -343,8 +351,8 @@
   function compute(p) {
     var rows = [], best = { n: 0, ev: 0 };
     for (var n = 1; n <= p.maxCartones; n++) {
-      var ev = evFor(n, p.ajenos, p);
-      rows.push({ n: n, coste: n * p.precio, prob: n / (n + p.ajenos), ev: ev, roi: ev / (n * p.precio) });
+      var ev = evFor(n, p.N, p);
+      rows.push({ n: n, coste: n * p.precio, prob: n / (n + p.N), ev: ev, roi: ev / (n * p.precio) });
       if (ev > best.ev) best = { n: n, ev: ev };
     }
     // Tope por presupuesto: gasto por partida <= banca / partidas (mínimo 1 cartón).
@@ -365,8 +373,8 @@
   }
 
   function renderTiles(p, r) {
-    var evRec = evFor(r.rec, p.ajenos, p);
-    var probRec = r.rec / (r.rec + p.ajenos);
+    var evRec = evFor(r.rec, p.N, p);
+    var probRec = r.rec / (r.rec + p.N);
     var tC = $("tCartones"), tE = $("tEV"), tP = $("tProb"), tU = $("tUmbral");
 
     if (r.favorable) {
@@ -374,7 +382,7 @@
       $("tCartonesSub").textContent =
         r.limite === "presupuesto" ? "óptimo matemático: " + r.best.n + " — recortado por tu presupuesto (" + eur.format(r.topePresu * p.precio) + "/partida)" :
         r.limite === "maximo" ? "tope del terminal alcanzado; el óptimo podría ser mayor" :
-        "óptimo matemático con " + p.ajenos + " cartones ajenos";
+        "óptimo matemático con " + p.N.toLocaleString("es-ES") + " ajenos (contador + subida final)";
     } else {
       tC.textContent = "0–1";
       $("tCartonesSub").textContent = "sin ventaja: si juegas, hazlo por ocio y con lo mínimo";
@@ -395,11 +403,11 @@
     if (!r.favorable) {
       v.innerHTML = "<strong>Ahora mismo la partida no es favorable con ninguna cantidad de cartones.</strong> " +
         (r.umbral > 0 && r.umbral !== Infinity
-          ? "Con estos premios, solo interesa cuando los cartones ajenos bajan de <strong>" + r.umbral.toLocaleString("es-ES") + "</strong> (ahora: " + p.ajenos.toLocaleString("es-ES") + "). Vuelve en una franja con menos gente o busca partidas con más garantizado."
+          ? "Con estos premios, solo interesa cuando los cartones ajenos al cierre bajan de <strong>" + r.umbral.toLocaleString("es-ES") + "</strong> (ahora: " + p.N.toLocaleString("es-ES") + " = " + p.ajenos.toLocaleString("es-ES") + " del contador + " + p.subida.toLocaleString("es-ES") + " de subida final). Vuelve en una franja con menos gente o busca partidas con más garantizado."
           : "Con premio puramente proporcional nunca hay ventaja: decide cuánto ocio quieres pagar y no lo superes.");
     } else {
       var margen = r.umbral === Infinity ? "" :
-        " Estás por debajo del umbral de " + r.umbral.toLocaleString("es-ES") + " cartones ajenos: es justo el escenario de «ir cuando hay poca gente» que buscabas.";
+        " Incluso contando la subida de última hora (" + p.N.toLocaleString("es-ES") + " ajenos al cierre) estás por debajo del umbral de " + r.umbral.toLocaleString("es-ES") + ": es justo el escenario de «ir cuando hay poca gente» que buscabas.";
       v.innerHTML = "<strong>Partida favorable.</strong> Jugando " + r.rec +
         " cartón(es) tu resultado esperado es " + eur.format(evRec) + " por partida." + margen +
         " Recuerda: es una media a largo plazo; la mayoría de partidas no cobrarás nada.";
